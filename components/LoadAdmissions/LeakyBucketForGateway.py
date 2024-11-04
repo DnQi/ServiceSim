@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 
 
 class LeakyBucketForGateway:
@@ -11,7 +10,7 @@ class LeakyBucketForGateway:
         self.leakybucket_history_file = []
 
         self.last_minute = 0
-        self.last_time = datetime.now().timestamp()
+        self.last_time = 0.0
         self.admission_num = capacities.copy()
         self.init_admission_num()
 
@@ -71,8 +70,8 @@ class LeakyBucketForGateway:
         for key, num in self.admission_num.items():
             self.leakybucket_history_file.append([this_minute, self.device_id, key[0], key[1], num])
 
-    def update_tokens(self):
-        current_time = datetime.now().timestamp()
+    def update_tokens(self, simulator_time):
+        current_time = simulator_time
         for key in self.tokens.keys():
             if key in self.admission_rate and key in self.capacities:
                 time_diff = (current_time - self.last_time) / 60.0
@@ -82,17 +81,17 @@ class LeakyBucketForGateway:
                 print("Error - Cannot find keys for tokens or capacities.")
         self.last_time = current_time
 
-    def is_admission(self, network_packet):
+    def is_admission(self, network_packet, simulator_time):
         if network_packet['destination_service_id'] != 0:
             return True
         else:
-            this_minute = int(datetime.now().timestamp() / 60)
+            this_minute = int(simulator_time / 60)
             if this_minute != self.last_minute:
                 self.write_admission_executor_result(this_minute)
                 self.init_admission_num()
                 self.last_minute = this_minute
 
-            self.update_tokens()
+            self.update_tokens(simulator_time)
             service_chain_id = network_packet['service_chain_id']
             user_level = network_packet['user_level']
             key = (service_chain_id, user_level)
@@ -110,6 +109,3 @@ class LeakyBucketForGateway:
     def add_admission_num(self, key):
         if key in self.admission_num:
             self.admission_num[key] += 1
-
-
-

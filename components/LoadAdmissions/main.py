@@ -47,6 +47,11 @@ def leak_bucket_for_gateway_is_admission():
         required: true
         schema:
           type: object
+      - name: simulator_time
+        in: body
+        required: true
+        schema:
+          type: double
     responses:
       200:
         description: Admission result
@@ -57,8 +62,10 @@ def leak_bucket_for_gateway_is_admission():
               type: boolean
               example: true
     """
-    network_packet = request.get_json()
-    result = leaky_bucket.is_admission(network_packet)
+    data = request.get_json()
+    network_packet = data["network_packet"]
+    simulator_time = data["simulator_time"]
+    result = leaky_bucket.is_admission(network_packet, simulator_time)
     return jsonify({'admission': result})
 
 
