@@ -95,3 +95,6 @@ def request_dispatching_simple__get_conf():
           type: object
     """
     return make_response(requestDispatchingSimple.to_json(), 200)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=80)
