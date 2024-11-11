@@ -8,6 +8,7 @@
 
 package org.infrastructureProvider.policies;
 
+import io.github.hit_ices.serviceSim.service.VmCloudletSchedulerManagerService;
 import org.infrastructureProvider.entities.Host;
 import org.infrastructureProvider.entities.Vm;
 

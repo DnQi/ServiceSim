@@ -71,11 +71,6 @@ public class Vm {
 	private String vmm;
 
 	/**
-	 * The Cloudlet scheduler.
-	 */
-	private CloudletScheduler cloudletScheduler;
-
-	/**
 	 * The host.
 	 */
 	private Host host;
@@ -126,7 +121,6 @@ public class Vm {
 	 * @param bw                amount of bandwidth
 	 * @param size              amount of storage
 	 * @param vmm               virtual machine monitor
-	 * @param cloudletScheduler cloudletScheduler policy for cloudlets
 	 * @pre id >= 0
 	 * @pre userId >= 0
 	 * @pre size > 0
@@ -145,8 +139,7 @@ public class Vm {
 			int ram,
 			long bw,
 			long size,
-			String vmm,
-			CloudletScheduler cloudletScheduler) {
+			String vmm) {
 		setId(id);
 		setUserId(userId);
 		setUid(getUid(userId, id));
@@ -156,7 +149,6 @@ public class Vm {
 		setBw(bw);
 		setSize(size);
 		setVmm(vmm);
-		setCloudletScheduler(cloudletScheduler);
 
 		setInMigration(false);
 		setBeingInstantiated(true);
@@ -167,109 +159,8 @@ public class Vm {
 		setCurrentAllocatedSize(0);
 	}
 
-	/**
-	 * Updates the processing of cloudlets running on this VM.
-	 *
-	 * @param currentTime current simulation time
-	 * @param mipsShare   array with MIPS share of each Pe available to the scheduler
-	 * @return time predicted completion time of the earliest finishing cloudlet, or 0 if there is no
-	 * next events
-	 * @pre currentTime >= 0
-	 * @post $none
-	 */
-	public double updateVmProcessing(double currentTime, List<Double> mipsShare) {
-		if (mipsShare != null) {
-			return getCloudletScheduler().updateVmProcessing(currentTime, mipsShare);
-		}
-		return 0.0;
-	}
-	/**
-	 * Gets the current requested mips.
-	 *
-	 * @return the current requested mips
-	 */
-	public List<Double> getCurrentRequestedMips() {
-		List<Double> currentRequestedMips = getCloudletScheduler().getCurrentRequestedMips();
-		if (isBeingInstantiated()) {
-			currentRequestedMips = new ArrayList<Double>();
-			for (int i = 0; i < getNumberOfPes(); i++) {
-				currentRequestedMips.add(getMips());
-			}
-		}
-		return currentRequestedMips;
-	}
 
-	/**
-	 * Gets the current requested total mips.
-	 *
-	 * @return the current requested total mips
-	 */
-	public double getCurrentRequestedTotalMips() {
-		double totalRequestedMips = 0;
-		for (double mips : getCurrentRequestedMips()) {
-			totalRequestedMips += mips;
-		}
-		return totalRequestedMips;
-	}
 
-	/**
-	 * Gets the current requested max mips among all virtual PEs.
-	 *
-	 * @return the current requested max mips
-	 */
-	public double getCurrentRequestedMaxMips() {
-		double maxMips = 0;
-		for (double mips : getCurrentRequestedMips()) {
-			if (mips > maxMips) {
-				maxMips = mips;
-			}
-		}
-		return maxMips;
-	}
-
-	/**
-	 * Gets the current requested bw.
-	 *
-	 * @return the current requested bw
-	 */
-	public long getCurrentRequestedBw() {
-		if (isBeingInstantiated()) {
-			return getBw();
-		}
-		return (long) (getCloudletScheduler().getCurrentRequestedUtilizationOfBw() * getBw());
-	}
-
-	/**
-	 * Gets the current requested ram.
-	 *
-	 * @return the current requested ram
-	 */
-	public int getCurrentRequestedRam() {
-		if (isBeingInstantiated()) {
-			return getRam();
-		}
-		return (int) (getCloudletScheduler().getCurrentRequestedUtilizationOfRam() * getRam());
-	}
-
-	/**
-	 * Get utilization created by all clouddlets running on this VM.
-	 *
-	 * @param time the time
-	 * @return total utilization
-	 */
-	public double getTotalUtilizationOfCpu(double time) {
-		return getCloudletScheduler().getTotalUtilizationOfCpu(time);
-	}
-
-	/**
-	 * Get utilization created by all cloudlets running on this VM in MIPS.
-	 *
-	 * @param time the time
-	 * @return total utilization
-	 */
-	public double getTotalUtilizationOfCpuMips(double time) {
-		return getTotalUtilizationOfCpu(time) * getMips();
-	}
 // <editor-fold desc="Properties">
 
 
@@ -355,7 +246,7 @@ public class Vm {
 		 *
 		 * @param mips the new mips
 		 */
-		protected void setMips(double mips) {
+        public void setMips(double mips) {
 			this.mips = mips;
 		}
 
@@ -483,23 +374,6 @@ public class Vm {
 			return host;
 		}
 
-		/**
-		 * Gets the vm scheduler.
-		 *
-		 * @return the vm scheduler
-		 */
-		public CloudletScheduler getCloudletScheduler() {
-			return cloudletScheduler;
-		}
-
-		/**
-		 * Sets the vm scheduler.
-		 *
-		 * @param cloudletScheduler the new vm scheduler
-		 */
-		protected void setCloudletScheduler(CloudletScheduler cloudletScheduler) {
-			this.cloudletScheduler = cloudletScheduler;
-		}
 
 		/**
 		 * Checks if is in migration.
