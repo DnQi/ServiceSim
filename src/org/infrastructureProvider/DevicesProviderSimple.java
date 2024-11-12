@@ -3,7 +3,6 @@ package org.infrastructureProvider;
 import org.cloudbus.cloudsim.Storage;
 import org.infrastructureProvider.entities.*;
 import org.infrastructureProvider.policies.*;
-import org.infrastructureProvider.policies.provisioners.PeProvisionerSimple;
 import org.utils.GeoCoverage;
 import org.utils.Location;
 
@@ -99,7 +98,7 @@ public class DevicesProviderSimple extends DevicesProvider {
 
             List<Pe> peListTmp = new ArrayList<Pe>();
             for(int j= 0; j < pescount[i]; j++)
-                peListTmp.add(new Pe(j, new PeProvisionerSimple(mipslenght)));
+                peListTmp.add(new Pe(j, mipslenght));
 
             var host=new Host(
                     i,
@@ -111,7 +110,8 @@ public class DevicesProviderSimple extends DevicesProvider {
             hostList.add(
                     host
             );
-            hostManager.getHostVmSchedulerManagerService().manage(host, new VmSchedulerSpaceShared(peListTmp));
+            hostManager.getVmScheduler().manage(host);
+           // hostManager.getHostVmSchedulerManagerService().manage(host, new VmSchedulerSpaceShared(peListTmp));
         }
 
         String arch = "x86";      // system architecture

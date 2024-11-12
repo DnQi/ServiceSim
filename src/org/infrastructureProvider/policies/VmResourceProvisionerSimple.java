@@ -6,7 +6,7 @@
  * Copyright (c) 2009-2012, The University of Melbourne, Australia
  */
 
-package org.infrastructureProvider.policies.provisioners;
+package org.infrastructureProvider.policies;
 
 import org.infrastructureProvider.entities.Host;
 import org.infrastructureProvider.entities.Pe;

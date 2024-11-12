@@ -6,7 +6,8 @@ import org.cloudbus.cloudsim.core.CloudSim;
 import org.infrastructureProvider.entities.Host;
 import org.infrastructureProvider.entities.Pe;
 import org.infrastructureProvider.entities.Vm;
-import org.infrastructureProvider.policies.provisioners.VmResourceProvisioner;
+import org.infrastructureProvider.policies.VmScheduler;
+import org.infrastructureProvider.policies.VmResourceProvisioner;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,11 +21,10 @@ public class DynamicLoadHostManager extends HostManager {
     protected Map<Host,Double> hostPreviousUtilizationMips = new HashMap<Host,Double>();
     
     public DynamicLoadHostManager(VmCloudletSchedulerManagerService vmCloudletSchedulerManagerService,
-                                  VmResourceProvisioner<Integer> ramProvisioner,
-                                  VmResourceProvisioner<Long> bwProvisioner,
-                                  VmResourceProvisioner<Double> mipsProvisioner,
-                                  HostVmSchedulerManagerService hostVmSchedulerManagerService) {
-        super(vmCloudletSchedulerManagerService, ramProvisioner, bwProvisioner, mipsProvisioner, hostVmSchedulerManagerService);
+                                  VmResourceProvisioner<Host,Integer> ramProvisioner,
+                                  VmResourceProvisioner<Host,Long> bwProvisioner,
+                                  VmScheduler vmScheduler) {
+        super(vmCloudletSchedulerManagerService, ramProvisioner, bwProvisioner,  vmScheduler);
     }
 
     @Override
@@ -35,16 +35,16 @@ public class DynamicLoadHostManager extends HostManager {
         double hostTotalRequestedMips = 0;
         var vmList = host.getVmList();
         for (Vm vm : vmList) {
-            hostVmSchedulerManagerService.deallocatePesForVm(host, vm);
+            vmScheduler.deallocatePesForVm(host, vm);
         }
 
         for (Vm vm : vmList) {
-            hostVmSchedulerManagerService.allocatePesForVm(host, vm, vmCloudletSchedulerManagerService.getCurrentRequestedMips(vm));
+            vmScheduler.allocatePesForVm(host, vm, vmCloudletSchedulerManagerService.getCurrentRequestedMips(vm));
         }
 
         for (Vm vm : vmList) {
             double totalRequestedMips = vmCloudletSchedulerManagerService.getCurrentRequestedTotalMips(vm);
-            double totalAllocatedMips = hostVmSchedulerManagerService.getTotalAllocatedMipsForVm(host, vm);
+            double totalAllocatedMips = vmScheduler.getTotalAllocatedMipsForVm(host, vm);
             if (!Log.isDisabled()) {
                 Log.formatLine(
                         "%.2f: [Host #" + host.getId() + "] Total allocated MIPS for VM #" + vm.getId()
@@ -56,15 +56,15 @@ public class DynamicLoadHostManager extends HostManager {
                         vm.getMips(),
                         totalRequestedMips / vm.getMips() * 100);
 
-                List<Pe> pes = hostVmSchedulerManagerService.getManager(host).getPesAllocatedForVM(vm);
+                List<Pe> pes = vmScheduler.getPesAllocatedForVM(host,vm);
                 StringBuilder pesString = new StringBuilder();
                 for (Pe pe : pes) {
-                    pesString.append(String.format(" PE #" + pe.getId() + ": %.2f.", pe.getPeProvisioner()
-                            .getTotalAllocatedMipsForVm(vm)));
+                    pesString.append(String.format(" PE #" + pe.getId() + ": %.2f.",
+                            vmScheduler.getTotalAllocatedMipsForVm(host,vm)));
                 }
                 Log.formatLine(
                         "%.2f: [Host #" + host.getId() + "] MIPS for VM #" + vm.getId() + " by PEs ("
-                                + host.getNumberOfPes() + " * " + hostVmSchedulerManagerService.getManager(host).getPeCapacity() + ")."
+                                + host.getNumberOfPes() + " * " + vmScheduler.getPeCapacity(host) + ")."
                                 + pesString,
                         CloudSim.clock());
             }
@@ -123,12 +123,12 @@ public class DynamicLoadHostManager extends HostManager {
     }
 
     public double getUtilizationOfCpu(Host host) {
-        double utilization = hostUtilizationMips.getOrDefault(host,0.0) / hostVmSchedulerManagerService.getMaxAvailableMips(host);
+        double utilization = hostUtilizationMips.getOrDefault(host,0.0) / vmScheduler.getMaxAvailableMips(host);
         return Math.min(utilization, 1);
     }
 
     public double getPreviousUtilizationOfCpu(Host host) {
-        double utilization = hostPreviousUtilizationMips.getOrDefault(host,0.0) / hostVmSchedulerManagerService.getMaxAvailableMips(host);
+        double utilization = hostPreviousUtilizationMips.getOrDefault(host,0.0) / vmScheduler.getMaxAvailableMips(host);
         return Math.min(utilization, 1);
     }
 }

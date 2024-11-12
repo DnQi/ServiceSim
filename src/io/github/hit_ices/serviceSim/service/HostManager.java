@@ -4,8 +4,7 @@ import org.cloudbus.cloudsim.Log;
 import org.infrastructureProvider.entities.Host;
 import org.infrastructureProvider.entities.Vm;
 import org.infrastructureProvider.policies.VmScheduler;
-import org.infrastructureProvider.policies.VmSchedulerBase;
-import org.infrastructureProvider.policies.provisioners.VmResourceProvisioner;
+import org.infrastructureProvider.policies.VmResourceProvisioner;
 
 import java.util.List;
 

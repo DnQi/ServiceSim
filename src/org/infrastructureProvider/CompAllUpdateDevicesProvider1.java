@@ -12,7 +12,6 @@ import org.infrastructureProvider.policies.PacketSchedulerTimeShared;
 import org.infrastructureProvider.policies.ShortestPathRoutingGenerator;
 import org.infrastructureProvider.policies.VmAllocationPolicySimple;
 import org.infrastructureProvider.policies.VmSchedulerSpaceShared;
-import org.infrastructureProvider.policies.provisioners.PeProvisionerSimple;
 import org.utils.GeoCoverage;
 import org.utils.Location;
 

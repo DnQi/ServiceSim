@@ -11,7 +11,7 @@ package org.cloudbus.cloudsim.lists;
 import org.cloudbus.cloudsim.Log;
 import org.infrastructureProvider.entities.Pe;
 import org.infrastructureProvider.entities.Vm;
-import org.infrastructureProvider.policies.provisioners.VmResourceProvisioner;
+import org.infrastructureProvider.policies.VmResourceProvisioner;
 
 import java.util.List;
 

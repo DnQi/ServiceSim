@@ -1,6 +1,5 @@
-package org.infrastructureProvider.policies.provisioners;
+package org.infrastructureProvider.policies;
 
-import org.infrastructureProvider.entities.Host;
 import org.infrastructureProvider.entities.Vm;
 
 public interface VmResourceProvisioner<THost, TResource> {

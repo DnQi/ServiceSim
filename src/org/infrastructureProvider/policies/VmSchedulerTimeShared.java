@@ -12,7 +12,6 @@ import org.infrastructureProvider.entities.Host;
 import org.infrastructureProvider.entities.Pe;
 import org.cloudbus.cloudsim.lists.PeList;
 import org.infrastructureProvider.entities.Vm;
-import org.infrastructureProvider.policies.provisioners.VmResourceProvisioner;
 
 import java.util.*;
 
