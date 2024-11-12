@@ -99,7 +99,7 @@ public class CompAllUpdateDevicesProvider1 extends DevicesProvider {
 
             List<Pe> peListTmp = new ArrayList<Pe>();
             for(int j= 0; j < pescount[i]; j++)
-                peListTmp.add(new Pe(j, new PeProvisionerSimple(mipslenght)));
+                peListTmp.add(new Pe(j, mipslenght));
             var host = new Host(
                     i,
                     storage[i],
@@ -107,7 +107,7 @@ public class CompAllUpdateDevicesProvider1 extends DevicesProvider {
                     ram[i],
                     bw[i]);
             hostList.add(host);
-            hostManager.getHostVmSchedulerManagerService().manage(host,new VmSchedulerSpaceShared(peListTmp));
+            hostManager.get.manage(host,new VmSchedulerSpaceShared(peListTmp));
 
         }
 

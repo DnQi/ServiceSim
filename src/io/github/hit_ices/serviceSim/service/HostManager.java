@@ -16,7 +16,7 @@ public class HostManager {
     protected final VmResourceProvisioner<Host, Long> bwProvisioner;
 
     protected final VmCloudletSchedulerManagerService vmCloudletSchedulerManagerService;
-
+    public VmScheduler getVmScheduler() {return vmScheduler;}
     public HostManager(VmCloudletSchedulerManagerService vmCloudletSchedulerManagerService,
                        VmResourceProvisioner<Host, Integer> ramProvisioner,
                        VmResourceProvisioner<Host, Long> bwProvisioner,
