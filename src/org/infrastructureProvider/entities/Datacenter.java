@@ -455,11 +455,13 @@ public class Datacenter extends SimEntity {
 				vm.setBeingInstantiated(false);
 			}
 			getVmCloudletSchedulerManager().updateVmProcessing(
-					vm, CloudSim.clock(), hostManager.getHostVmSchedulerManagerService().getManager(
-									getVmAllocationPolicy().getHost(vm))
-					.getAllocatedMipsForVm(vm));
+					vm, CloudSim.clock(), getAllocatedMipsForVm(vm));
 		}
 
+	}
+
+	protected List<Double> getAllocatedMipsForVm(Vm vm) {
+		return hostManager.getVmScheduler().getAllocatedMipsForVm(getVmAllocationPolicy().getHost(vm), vm);
 	}
 
 	private VmCloudletSchedulerManagerService getVmCloudletSchedulerManager() {

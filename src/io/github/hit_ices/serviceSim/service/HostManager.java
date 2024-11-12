@@ -98,8 +98,8 @@ public class HostManager {
                 && bwProvisioner.isSuitableForVm(host, vm, vmCloudletSchedulerManagerService.getCurrentRequestedBw(vm)));
     }
 
-    public boolean vmCreate(Host host, Vm vm, long storage) {
-        if (storage < vm.getSize()) {
+    public boolean vmCreate(Host host, Vm vm) {
+        if (host.getStorage() < vm.getSize()) {
             Log.printLine("[VmSchedulerBase.vmCreate] Allocation of VM #" + vm.getId() + " failed by storage");
             return false;
         }
@@ -122,16 +122,16 @@ public class HostManager {
             return false;
         }
 
-        storage -= vm.getSize();
+        host.setStorage(host.getStorage() - vm.getSize());
         host.getVmList().add(vm);
         vm.setHost(host);
         return true;
     }
 
-    public void vmDestroy(Host host, Vm vm, List<? extends Vm> vmList) {
+    public void vmDestroy(Host host, Vm vm) {
         if (vm != null) {
             vmDeallocate(host, vm);
-            vmList.remove(vm);
+            host.getVmList().remove(vm);
             vm.setHost(null);
         }
     }

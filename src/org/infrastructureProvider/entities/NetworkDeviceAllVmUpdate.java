@@ -60,8 +60,7 @@ public class NetworkDeviceAllVmUpdate extends NetworkDevice {
         double minTime = Double.MAX_VALUE;
         for (Vm vm1 : getVmList()){
             double nextCheckInterval = getVmCloudletSchedulerManager().updateVmProcessing(vm1, CloudSim.clock(),
-                    hostManager.getHostVmSchedulerManagerService().getManager(getVmAllocationPolicy().getHost(vm))
-                    .getAllocatedMipsForVm(vm));
+                    getAllocatedMipsForVm(vm));
             if (nextCheckInterval<minTime && nextCheckInterval>0){
                 minTime = nextCheckInterval;
             }

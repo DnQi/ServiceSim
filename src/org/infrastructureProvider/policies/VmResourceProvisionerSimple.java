@@ -50,11 +50,11 @@ public class VmResourceProvisionerSimple<THost, TResource> implements VmResource
             0L
     );
     public static VmResourceProvisionerSimple<Pe, Double> MipsProvisioner = new VmResourceProvisionerSimple<Pe, Double>(
-            Host::getTotalMips,
-            Host::getAvailableMips,
+            Pe::getTotalMips,
+            Pe::getAvailableMips,
             (h, m) -> h.setAvailableMips(h.getAvailableMips() - m),
             (h, m) -> h.setAvailableMips(h.getAvailableMips() + m),
-            Host::setAvailableMips,
+            Pe::setAvailableMips,
             Vm::getMips,
             Vm::setMips,
             Comparator.naturalOrder(),

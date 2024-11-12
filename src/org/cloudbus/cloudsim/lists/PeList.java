@@ -50,10 +50,10 @@ public class PeList {
 	 * @pre id >= 0
 	 * @post $none
 	 */
-	public static <T extends Pe> int getMips(List<T> peList, int id) {
+	public static <T extends Pe> double getMips(List<T> peList, int id) {
 		Pe pe = getById(peList, id);
 		if (pe != null) {
-			return pe.getMips();
+			return pe.getTotalMips();
 		}
 		return -1;
 	}

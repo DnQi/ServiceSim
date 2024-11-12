@@ -106,7 +106,7 @@ public class CompAllUpdateDevicesProvider1 extends DevicesProvider {
                     ram[i],
                     bw[i]);
             hostList.add(host);
-            hostManager.get.manage(host,new VmSchedulerSpaceShared(peListTmp));
+            hostManager.getVmScheduler().manage(host);//,new VmSchedulerSpaceShared(peListTmp));
 
         }
 
@@ -127,7 +127,7 @@ public class CompAllUpdateDevicesProvider1 extends DevicesProvider {
         NetworkDeviceAllVmUpdate datacenter = null;
         try {
             datacenter = new NetworkDeviceAllVmUpdate(name, characteristics,
-                    new VmAllocationPolicySimple(hostList), storageList, 0,
+                    new VmAllocationPolicySimple(hostList,hostManager), storageList, 0,
                     location, geoCoverage, identify, level,hostManager);
         } catch (Exception e) {
             e.printStackTrace();

@@ -378,8 +378,7 @@ public class NetworkDevice extends Datacenter {
 
     public void cloudletProcessUpdate(Vm vm){
         double nextCheckInterval = getVmCloudletSchedulerManager().updateVmProcessing(vm,
-                CloudSim.clock(), hostManager.getHostVmSchedulerManagerService().getManager(getVmAllocationPolicy().getHost(vm))
-                .getAllocatedMipsForVm(vm));
+                CloudSim.clock(),  getAllocatedMipsForVm(vm));
         if (nextCheckInterval > 0 && nextCheckInterval!=Double.MAX_VALUE){
             send(getId(), nextCheckInterval, ServiceSimEvents.Cloudlet_PROCESS_UPDATE,vm);
         }
@@ -532,10 +531,7 @@ public class NetworkDevice extends Datacenter {
             if (instance.isBeingInstantiated()) {
                 instance.setBeingInstantiated(false);
             }
-            getVmCloudletSchedulerManager().updateVmProcessing(instance, CloudSim.clock(),
-                    hostManager.getHostVmSchedulerManagerService().getManager(getVmAllocationPolicy().getHost(instance))
-
-                    .getAllocatedMipsForVm(instance));
+            getVmCloudletSchedulerManager().updateVmProcessing(instance, CloudSim.clock(),getAllocatedMipsForVm(instance));
             Pair<Integer,MicroserviceInstance> data = new Pair<>(getId(),instance);
             send(getId(),delayInStartUp,ServiceSimEvents.Service_DISCOVERY_ADD,data);
         }

@@ -125,7 +125,7 @@ public class CompK8SDevicesProvider extends DevicesProvider {
         NetworkDevice datacenter = null;
         try {
             datacenter = new NetworkDevice(name, characteristics,
-                    new VmAllocationPolicySimple(hostList), storageList, 0,
+                    new VmAllocationPolicySimple(hostList,hostManager), storageList, 0,
                     location, geoCoverage, identify, level,hostManager);
         } catch (Exception e) {
             e.printStackTrace();

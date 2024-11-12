@@ -8,6 +8,7 @@
 
 package org.infrastructureProvider.policies;
 
+import io.github.hit_ices.serviceSim.service.HostManager;
 import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.infrastructureProvider.entities.Host;
@@ -26,7 +27,8 @@ import java.util.*;
 public class VmAllocationPolicySimple implements VmAllocationPolicy {
 	/** The host list. */
 	private final List<? extends Host> hostList;
-	/** The vm table. */
+    private final HostManager hostManager;
+    /** The vm table. */
 	private final Map<String, Host> vmTable=new HashMap<>();
 
 	/** The used pes. */
@@ -42,10 +44,11 @@ public class VmAllocationPolicySimple implements VmAllocationPolicy {
 	 * @pre $none
 	 * @post $none
 	 */
-	public VmAllocationPolicySimple(List<? extends Host> list) {
+	public VmAllocationPolicySimple(List<? extends Host> list, HostManager hostManager) {
 		hostList= list;
-		
-		for (Host host : getHostList()) {
+        this.hostManager = hostManager;
+
+        for (Host host : getHostList()) {
 			freePes.add(host.getNumberOfPes());
 
 		}
@@ -84,7 +87,7 @@ public class VmAllocationPolicySimple implements VmAllocationPolicy {
 				}
 
 				Host host = getHostList().get(idx);
-				result = host.vmCreate(vm);
+				result = hostManager.vmCreate(host,vm);
 
 				if (result) { // if vm were succesfully created in the host
 					vmTable.put(vm.getUid(), host);
@@ -116,7 +119,7 @@ public class VmAllocationPolicySimple implements VmAllocationPolicy {
 		int idx = getHostList().indexOf(host);
 		int pes = usedPes.remove(vm.getUid());
 		if (host != null) {
-			host.vmDestroy(vm);
+			hostManager.vmDestroy(host,vm);
 			freePes.set(idx, freePes.get(idx) + pes);
 		}
 	}
@@ -173,7 +176,7 @@ public class VmAllocationPolicySimple implements VmAllocationPolicy {
 	 */
 	@Override
 	public boolean allocateHostForVm(Vm vm, Host host) {
-		if (host.vmCreate(vm)) { // if vm has been succesfully created in the host
+		if (hostManager.vmCreate(host,vm)) { // if vm has been succesfully created in the host
 			vmTable.put(vm.getUid(), host);
 
 			int requiredPes = vm.getNumberOfPes();

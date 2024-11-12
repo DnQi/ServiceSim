@@ -157,7 +157,7 @@ public class CompAllUpdateDevicesProvider2 extends DevicesProvider {
         NetworkDeviceAllVmUpdate datacenter = null;
         try {
             datacenter = new NetworkDeviceAllVmUpdate(name, characteristics,
-                    new VmAllocationPolicySimple(hostList), storageList, 0,
+                    new VmAllocationPolicySimple(hostList,hostManager), storageList, 0,
                     location, geoCoverage, identify, level,hostManager);
         } catch (Exception e) {
             e.printStackTrace();
