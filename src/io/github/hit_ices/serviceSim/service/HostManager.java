@@ -2,9 +2,9 @@ package io.github.hit_ices.serviceSim.service;
 
 import org.cloudbus.cloudsim.Log;
 import org.infrastructureProvider.entities.Host;
-import org.infrastructureProvider.entities.Pe;
 import org.infrastructureProvider.entities.Vm;
 import org.infrastructureProvider.policies.VmScheduler;
+import org.infrastructureProvider.policies.VmSchedulerBase;
 import org.infrastructureProvider.policies.provisioners.VmResourceProvisioner;
 
 import java.util.List;
@@ -44,23 +44,23 @@ public class HostManager {
 
         if (!vmsMigratingIn.contains(vm)) {
             if (storage < vm.getSize()) {
-                Log.printLine("[VmScheduler.addMigratingInVm] Allocation of VM #" + vm.getId() + " failed by storage");
+                Log.printLine("[VmSchedulerBase.addMigratingInVm] Allocation of VM #" + vm.getId() + " failed by storage");
                 System.exit(0);
             }
 
             if (!ramProvisioner.allocateForVm(host, vm, vmCloudletSchedulerManagerService.getCurrentRequestedRam(vm))) {
-                Log.printLine("[VmScheduler.addMigratingInVm] Allocation of VM #" + vm.getId() + " failed by RAM");
+                Log.printLine("[VmSchedulerBase.addMigratingInVm] Allocation of VM #" + vm.getId() + " failed by RAM");
                 System.exit(0);
             }
 
             if (!bwProvisioner.allocateForVm(host, vm, vmCloudletSchedulerManagerService.getCurrentRequestedBw(vm))) {
-                Log.printLine("[VmScheduler.addMigratingInVm] Allocation of VM #" + vm.getId() + " failed by BW");
+                Log.printLine("[VmSchedulerBase.addMigratingInVm] Allocation of VM #" + vm.getId() + " failed by BW");
                 System.exit(0);
             }
 
             vmScheduler.getVmsMigratingIn(host).add(vm.getUid());
             if (!vmScheduler.allocatePesForVm(host,vm, vmCloudletSchedulerManagerService.getCurrentRequestedMips(vm))) {
-                Log.printLine("[VmScheduler.addMigratingInVm] Allocation of VM #" + vm.getId() + " failed by MIPS");
+                Log.printLine("[VmSchedulerBase.addMigratingInVm] Allocation of VM #" + vm.getId() + " failed by MIPS");
                 System.exit(0);
             }
 
@@ -101,23 +101,23 @@ public class HostManager {
 
     public boolean vmCreate(Host host, Vm vm, long storage) {
         if (storage < vm.getSize()) {
-            Log.printLine("[VmScheduler.vmCreate] Allocation of VM #" + vm.getId() + " failed by storage");
+            Log.printLine("[VmSchedulerBase.vmCreate] Allocation of VM #" + vm.getId() + " failed by storage");
             return false;
         }
 
         if (!ramProvisioner.allocateForVm(host, vm, vmCloudletSchedulerManagerService.getCurrentRequestedRam(vm))) {
-            Log.printLine("[VmScheduler.vmCreate] Allocation of VM #" + vm.getId() + " failed by RAM");
+            Log.printLine("[VmSchedulerBase.vmCreate] Allocation of VM #" + vm.getId() + " failed by RAM");
             return false;
         }
 
         if (!bwProvisioner.allocateForVm(host, vm, vmCloudletSchedulerManagerService.getCurrentRequestedBw(vm))) {
-            Log.printLine("[VmScheduler.vmCreate] Allocation of VM #" + vm.getId() + " failed by BW");
+            Log.printLine("[VmSchedulerBase.vmCreate] Allocation of VM #" + vm.getId() + " failed by BW");
             ramProvisioner.deallocateForVm(host, vm);
             return false;
         }
 
         if (!vmScheduler.allocatePesForVm(host,vm, vmCloudletSchedulerManagerService.getCurrentRequestedMips(vm))) {
-            Log.printLine("[VmScheduler.vmCreate] Allocation of VM #" + vm.getId() + " failed by MIPS");
+            Log.printLine("[VmSchedulerBase.vmCreate] Allocation of VM #" + vm.getId() + " failed by MIPS");
             ramProvisioner.deallocateForVm(host, vm);
             bwProvisioner.deallocateForVm(host, vm);
             return false;

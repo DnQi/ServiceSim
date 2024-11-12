@@ -24,7 +24,7 @@ import java.util.*;
  * @author Anton Beloglazov
  * @since CloudSim Toolkit 1.0
  */
-public class VmSchedulerSpaceShared extends VmScheduler {
+public class VmSchedulerSpaceShared extends VmSchedulerBase {
 
 	/** Map containing VM ID and a vector of PEs allocated to this VM. */
 	protected final Map<Host, Map<String, List<Pe>>> peAllocationMap = new HashMap<>();
@@ -48,7 +48,7 @@ public class VmSchedulerSpaceShared extends VmScheduler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.cloudbus.cloudsim.VmScheduler#allocatePesForVm(org.cloudbus.cloudsim.Vm,
+	 * @see org.cloudbus.cloudsim.VmSchedulerBase#allocatePesForVm(org.cloudbus.cloudsim.Vm,
 	 * java.util.List)
 	 */
 	@Override
@@ -86,7 +86,7 @@ public class VmSchedulerSpaceShared extends VmScheduler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.cloudbus.cloudsim.VmScheduler#deallocatePesForVm(org.cloudbus.cloudsim.Vm)
+	 * @see org.cloudbus.cloudsim.VmSchedulerBase#deallocatePesForVm(org.cloudbus.cloudsim.Vm)
 	 */
 	@Override
 	public void deallocatePesForVm(Host host,Vm vm) {

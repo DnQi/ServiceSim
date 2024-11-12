@@ -25,7 +25,7 @@ import java.util.*;
  * @author Anton Beloglazov
  * @since CloudSim Toolkit 1.0
  */
-public class VmSchedulerTimeShared extends VmScheduler {
+public class VmSchedulerTimeShared extends VmSchedulerBase {
 
 	/** The mips map requested. */
 	protected final Map<Host, Map<String, List<Double>>> mipsMapRequestedMap =new HashMap<>();
@@ -48,7 +48,7 @@ public class VmSchedulerTimeShared extends VmScheduler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see cloudsim.VmScheduler#allocatePesForVm(cloudsim.Vm, java.util.List)
+	 * @see cloudsim.VmSchedulerBase#allocatePesForVm(cloudsim.Vm, java.util.List)
 	 */
 	@Override
 	public boolean allocatePesForVm(Host host, Vm vm, List<Double> mipsShareRequested) {
@@ -163,7 +163,7 @@ public class VmSchedulerTimeShared extends VmScheduler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see cloudsim.VmScheduler#deallocatePesForVm(cloudsim.Vm)
+	 * @see cloudsim.VmSchedulerBase#deallocatePesForVm(cloudsim.Vm)
 	 */
 	@Override
 	public void deallocatePesForVm(Host host, Vm vm) {
