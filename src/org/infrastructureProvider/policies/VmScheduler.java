@@ -8,9 +8,11 @@
 package org.infrastructureProvider.policies;
 
 import org.cloudbus.cloudsim.Log;
-import org.infrastructureProvider.entities.Pe;
 import org.cloudbus.cloudsim.lists.PeList;
+import org.infrastructureProvider.entities.Host;
+import org.infrastructureProvider.entities.Pe;
 import org.infrastructureProvider.entities.Vm;
+import org.infrastructureProvider.policies.provisioners.VmResourceProvisioner;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,38 +29,33 @@ import java.util.Map;
  */
 public abstract class VmScheduler {
 
-	/** The peList. */
-	private List<? extends Pe> peList;
+	protected final VmResourceProvisioner<Pe, Double> provisioner;
 
 	/** The map of VMs to PEs. */
-	private Map<String, List<Pe>> peMap;
-
+	protected final Map<Host, Map<String, List<Pe>>> peMap = new HashMap<>();
 	/** The MIPS that are currently allocated to the VMs. */
-	private Map<String, List<Double>> mipsMap;
-
+	protected final Map<Host, Map<String, List<Double>>> mipsMap = new HashMap<>();
 	/** The total available mips. */
-	private double availableMips;
-
+	protected final Map<Host, Double> availableMipsMap = new HashMap<>();
 	/** The VMs migrating in. */
-	private List<String> vmsMigratingIn;
-
+	protected final Map<Host, List<String>> vmsMigratingInMap = new HashMap<>();
 	/** The VMs migrating out. */
-	private List<String> vmsMigratingOut;
-
+	protected final Map<Host, List<String>> vmsMigratingOutMap = new HashMap<>();
+	public void manage(Host host){
+		peMap.put(host,new HashMap<>());
+		mipsMap.put(host,new HashMap<>());
+		availableMipsMap.put(host,0.0);
+		vmsMigratingInMap.put(host,new ArrayList<>());
+		vmsMigratingOutMap.put(host,new ArrayList<>());
+	}
 	/**
 	 * Creates a new HostAllocationPolicy.
-	 * 
-	 * @param pelist the pelist
+	 *
 	 * @pre peList != $null
 	 * @post $none
 	 */
-	public VmScheduler(List<? extends Pe> pelist) {
-		setPeList(pelist);
-		setPeMap(new HashMap<String, List<Pe>>());
-		setMipsMap(new HashMap<String, List<Double>>());
-		setAvailableMips(PeList.getTotalMips(getPeList()));
-		setVmsMigratingIn(new ArrayList<String>());
-		setVmsMigratingOut(new ArrayList<String>());
+	public VmScheduler(VmResourceProvisioner<Pe, Double> provisioner) {
+		this.provisioner = provisioner;
 	}
 
 	/**
@@ -70,7 +67,7 @@ public abstract class VmScheduler {
 	 * @pre $none
 	 * @post $none
 	 */
-	public abstract boolean allocatePesForVm(Vm vm, List<Double> mipsShare);
+	public abstract boolean allocatePesForVm(Host host, Vm vm, List<Double> mipsShare);
 
 	/**
 	 * Releases PEs allocated to a VM.
@@ -79,7 +76,7 @@ public abstract class VmScheduler {
 	 * @pre $none
 	 * @post $none
 	 */
-	public abstract void deallocatePesForVm(Vm vm);
+	public abstract void deallocatePesForVm(Host host, Vm vm);
 
 	/**
 	 * Releases PEs allocated to all the VMs.
@@ -87,11 +84,11 @@ public abstract class VmScheduler {
 	 * @pre $none
 	 * @post $none
 	 */
-	public void deallocatePesForAllVms() {
-		getMipsMap().clear();
-		setAvailableMips(PeList.getTotalMips(getPeList()));
-		for (Pe pe : getPeList()) {
-			pe.getPeProvisioner().deallocateMipsForAllVms();
+	public void deallocatePesForAllVms(Host host) {
+		mipsMap.getOrDefault(host, new HashMap<>()).clear();
+		availableMipsMap.put(host, PeList.getTotalMips(getPeList(host)));
+		for (Pe pe : getPeList(host)) {
+			provisioner.deallocateForAllVms(pe);
 		}
 	}
 
@@ -101,8 +98,8 @@ public abstract class VmScheduler {
 	 * @param vm the vm
 	 * @return the pes allocated for vm
 	 */
-	public List<Pe> getPesAllocatedForVM(Vm vm) {
-		return getPeMap().get(vm.getUid());
+	public List<Pe> getPesAllocatedForVM(Host host, Vm vm) {
+		return peMap.get(host).get(vm.getUid());
 	}
 
 	/**
@@ -113,8 +110,8 @@ public abstract class VmScheduler {
 	 * @pre $none
 	 * @post $none
 	 */
-	public List<Double> getAllocatedMipsForVm(Vm vm) {
-		return getMipsMap().get(vm.getUid());
+	public List<Double> getAllocatedMipsForVm(Host host, Vm vm) {
+		return mipsMap.get(host).get(vm.getUid());
 	}
 
 	/**
@@ -123,9 +120,9 @@ public abstract class VmScheduler {
 	 * @param vm the vm
 	 * @return the allocated mips for vm
 	 */
-	public double getTotalAllocatedMipsForVm(Vm vm) {
+	public double getTotalAllocatedMipsForVm(Host host, Vm vm) {
 		double allocated = 0;
-		List<Double> mipsMap = getAllocatedMipsForVm(vm);
+		List<Double> mipsMap = getAllocatedMipsForVm(host, vm);
 		if (mipsMap != null) {
 			for (double mips : mipsMap) {
 				allocated += mips;
@@ -139,15 +136,15 @@ public abstract class VmScheduler {
 	 * 
 	 * @return max mips
 	 */
-	public double getMaxAvailableMips() {
-		if (getPeList() == null) {
+	public double getMaxAvailableMips(Host host) {
+		if (host.getPeList().isEmpty()) {
 			Log.printLine("Pe list is empty");
 			return 0;
 		}
 
 		double max = 0.0;
-		for (Pe pe : getPeList()) {
-			double tmp = pe.getPeProvisioner().getAvailableMips();
+		for (Pe pe : host.getPeList()) {
+			double tmp = pe.getAvailableMips();
 			if (tmp > max) {
 				max = tmp;
 			}
@@ -158,126 +155,66 @@ public abstract class VmScheduler {
 
 	/**
 	 * Returns PE capacity in MIPS.
-	 * 
+	 *
 	 * @return mips
 	 */
-	public double getPeCapacity() {
-		if (getPeList() == null) {
+	public double getPeCapacity(Host host) {
+		if (host.getPeList().isEmpty()) {
 			Log.printLine("Pe list is empty");
 			return 0;
 		}
-		return getPeList().get(0).getMips();
+		return host.getPeList().getFirst().getTotalMips();
 	}
 
 	/**
 	 * Gets the vm list.
-	 * 
+	 *
 	 * @param <T> the generic type
 	 * @return the vm list
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends Pe> List<T> getPeList() {
-		return (List<T>) peList;
+	public <T extends Pe> List<T> getPeList(Host host) {
+		return (List<T>) host.getPeList();
 	}
 
-	/**
-	 * Sets the vm list.
-	 * 
-	 * @param <T> the generic type
-	 * @param peList the pe list
-	 */
-	protected <T extends Pe> void setPeList(List<T> peList) {
-		this.peList = peList;
-	}
-
-	/**
-	 * Gets the mips map.
-	 * 
-	 * @return the mips map
-	 */
-	protected Map<String, List<Double>> getMipsMap() {
-		return mipsMap;
-	}
-
-	/**
-	 * Sets the mips map.
-	 * 
-	 * @param mipsMap the mips map
-	 */
-	protected void setMipsMap(Map<String, List<Double>> mipsMap) {
-		this.mipsMap = mipsMap;
-	}
 
 	/**
 	 * Gets the free mips.
-	 * 
+	 *
 	 * @return the free mips
 	 */
-	public double getAvailableMips() {
-		return availableMips;
-	}
-
-	/**
-	 * Sets the free mips.
-	 * 
-	 * @param availableMips the new free mips
-	 */
-	protected void setAvailableMips(double availableMips) {
-		this.availableMips = availableMips;
+	public double getAvailableMips(Host host) {
+		return availableMipsMap.get(host);
 	}
 
 	/**
 	 * Gets the vms in migration.
-	 * 
+	 *
 	 * @return the vms in migration
 	 */
-	public List<String> getVmsMigratingOut() {
-		return vmsMigratingOut;
+	public List<String> getVmsMigratingOut(Host host) {
+		return vmsMigratingOutMap.get(host);
 	}
 
-	/**
-	 * Sets the vms in migration.
-	 * 
-	 * @param vmsInMigration the new vms migrating out
-	 */
-	protected void setVmsMigratingOut(List<String> vmsInMigration) {
-		vmsMigratingOut = vmsInMigration;
-	}
 
 	/**
 	 * Gets the vms migrating in.
-	 * 
+	 *
 	 * @return the vms migrating in
 	 */
-	public List<String> getVmsMigratingIn() {
-		return vmsMigratingIn;
+	public List<String> getVmsMigratingIn(Host host) {
+		return vmsMigratingInMap.get(host);
 	}
 
-	/**
-	 * Sets the vms migrating in.
-	 * 
-	 * @param vmsMigratingIn the new vms migrating in
-	 */
-	protected void setVmsMigratingIn(List<String> vmsMigratingIn) {
-		this.vmsMigratingIn = vmsMigratingIn;
-	}
 
 	/**
 	 * Gets the pe map.
-	 * 
+	 *
 	 * @return the pe map
 	 */
-	public Map<String, List<Pe>> getPeMap() {
-		return peMap;
+	public Map<String, List<Pe>> getPeMap(Host host) {
+		return peMap.get(host);
 	}
 
-	/**
-	 * Sets the pe map.
-	 * 
-	 * @param peMap the pe map
-	 */
-	protected void setPeMap(Map<String, List<Pe>> peMap) {
-		this.peMap = peMap;
-	}
 
 }

@@ -2,41 +2,36 @@ package io.github.hit_ices.serviceSim.service;
 
 import org.cloudbus.cloudsim.Log;
 import org.infrastructureProvider.entities.Host;
+import org.infrastructureProvider.entities.Pe;
 import org.infrastructureProvider.entities.Vm;
+import org.infrastructureProvider.policies.VmScheduler;
 import org.infrastructureProvider.policies.provisioners.VmResourceProvisioner;
 
 import java.util.List;
 
 // HostManager class with methods moved from Host
 public class HostManager {
+    protected final VmScheduler vmScheduler;
+    protected final VmResourceProvisioner<Host, Integer> ramProvisioner;
+    protected final VmResourceProvisioner<Host, Long> bwProvisioner;
+
     protected final VmCloudletSchedulerManagerService vmCloudletSchedulerManagerService;
-    protected final VmResourceProvisioner<Integer> ramProvisioner;
-    protected final VmResourceProvisioner<Long> bwProvisioner;
-    protected final VmResourceProvisioner<Double> mipsProvisioner;
-
-    public HostVmSchedulerManagerService getHostVmSchedulerManagerService() {
-        return hostVmSchedulerManagerService;
-    }
-
-    protected final HostVmSchedulerManagerService hostVmSchedulerManagerService;
 
     public HostManager(VmCloudletSchedulerManagerService vmCloudletSchedulerManagerService,
-                       VmResourceProvisioner<Integer> ramProvisioner,
-                       VmResourceProvisioner<Long> bwProvisioner,
-                       VmResourceProvisioner<Double> mipsProvisioner,
-                       HostVmSchedulerManagerService hostVmSchedulerManagerService) {
-        this.vmCloudletSchedulerManagerService = vmCloudletSchedulerManagerService;
+                       VmResourceProvisioner<Host, Integer> ramProvisioner,
+                       VmResourceProvisioner<Host, Long> bwProvisioner,
+                       VmScheduler vmScheduler) {
+        this.vmScheduler = vmScheduler;
         this.ramProvisioner = ramProvisioner;
         this.bwProvisioner = bwProvisioner;
-        this.mipsProvisioner = mipsProvisioner;
-        this.hostVmSchedulerManagerService = hostVmSchedulerManagerService;
+        this.vmCloudletSchedulerManagerService=vmCloudletSchedulerManagerService;
     }
 
     public double updateVmsProcessing(Host host, double currentTime) {
         double smallerTime = Double.MAX_VALUE;
 
         for (Vm vm : host.getVmList()) {
-            double time = vmCloudletSchedulerManagerService.updateVmProcessing(vm, currentTime, hostVmSchedulerManagerService.getManager(host).getAllocatedMipsForVm(vm));
+            double time = vmCloudletSchedulerManagerService.updateVmProcessing(vm, currentTime, vmScheduler.getAllocatedMipsForVm(host,vm));
             if (time > 0.0 && time < smallerTime) {
                 smallerTime = time;
             }
@@ -63,8 +58,8 @@ public class HostManager {
                 System.exit(0);
             }
 
-            hostVmSchedulerManagerService.getManager(host).getVmsMigratingIn().add(vm.getUid());
-            if (!hostVmSchedulerManagerService.getManager(host).allocatePesForVm(vm, vmCloudletSchedulerManagerService.getCurrentRequestedMips(vm))) {
+            vmScheduler.getVmsMigratingIn(host).add(vm.getUid());
+            if (!vmScheduler.allocatePesForVm(host,vm, vmCloudletSchedulerManagerService.getCurrentRequestedMips(vm))) {
                 Log.printLine("[VmScheduler.addMigratingInVm] Allocation of VM #" + vm.getId() + " failed by MIPS");
                 System.exit(0);
             }
@@ -78,7 +73,7 @@ public class HostManager {
         vmDeallocate(host, vm);
         vmsMigratingIn.remove(vm);
         vmList.remove(vm);
-        hostVmSchedulerManagerService.getManager(host).getVmsMigratingIn().remove(vm.getUid());
+        vmScheduler.getVmsMigratingIn(host).remove(vm.getUid());
         vm.setInMigration(false);
     }
 
@@ -88,18 +83,18 @@ public class HostManager {
             if (!vmList.contains(vm)) {
                 vmList.add(vm);
             }
-            if (!hostVmSchedulerManagerService.getManager(host).getVmsMigratingIn().contains(vm.getUid())) {
-                hostVmSchedulerManagerService.getManager(host).getVmsMigratingIn().add(vm.getUid());
+            if (!vmScheduler.getVmsMigratingIn(host).contains(vm.getUid())) {
+                vmScheduler.getVmsMigratingIn(host).add(vm.getUid());
             }
             ramProvisioner.allocateForVm(host, vm, vmCloudletSchedulerManagerService.getCurrentRequestedRam(vm));
             bwProvisioner.allocateForVm(host, vm, vmCloudletSchedulerManagerService.getCurrentRequestedBw(vm));
-            hostVmSchedulerManagerService.getManager(host).allocatePesForVm(vm, vmCloudletSchedulerManagerService.getCurrentRequestedMips(vm));
+            vmScheduler.allocatePesForVm(host,vm, vmCloudletSchedulerManagerService.getCurrentRequestedMips(vm));
         }
     }
 
     public boolean isSuitableForVm(Host host, Vm vm) {
-        return (hostVmSchedulerManagerService.getManager(host).getPeCapacity() >= vmCloudletSchedulerManagerService.getCurrentRequestedMaxMips(vm)
-                && hostVmSchedulerManagerService.getManager(host).getAvailableMips() >= vmCloudletSchedulerManagerService.getCurrentRequestedTotalMips(vm)
+        return (vmScheduler.getPeCapacity(host) >= vmCloudletSchedulerManagerService.getCurrentRequestedMaxMips(vm)
+                && vmScheduler.getAvailableMips(host) >= vmCloudletSchedulerManagerService.getCurrentRequestedTotalMips(vm)
                 && ramProvisioner.isSuitableForVm(host, vm, vmCloudletSchedulerManagerService.getCurrentRequestedRam(vm))
                 && bwProvisioner.isSuitableForVm(host, vm, vmCloudletSchedulerManagerService.getCurrentRequestedBw(vm)));
     }
@@ -121,7 +116,7 @@ public class HostManager {
             return false;
         }
 
-        if (!hostVmSchedulerManagerService.getManager(host).allocatePesForVm(vm, vmCloudletSchedulerManagerService.getCurrentRequestedMips(vm))) {
+        if (!vmScheduler.allocatePesForVm(host,vm, vmCloudletSchedulerManagerService.getCurrentRequestedMips(vm))) {
             Log.printLine("[VmScheduler.vmCreate] Allocation of VM #" + vm.getId() + " failed by MIPS");
             ramProvisioner.deallocateForVm(host, vm);
             bwProvisioner.deallocateForVm(host, vm);
@@ -154,13 +149,13 @@ public class HostManager {
     protected void vmDeallocate(Host host, Vm vm) {
         ramProvisioner.deallocateForVm(host, vm);
         bwProvisioner.deallocateForVm(host, vm);
-        hostVmSchedulerManagerService.getManager(host).deallocatePesForVm(vm);
+        vmScheduler.deallocatePesForVm(host,vm);
     }
 
     protected void vmDeallocateAll(Host host) {
         ramProvisioner.deallocateForAllVms(host);
         bwProvisioner.deallocateForAllVms(host);
-        hostVmSchedulerManagerService.getManager(host).deallocatePesForAllVms();
+        vmScheduler.deallocatePesForAllVms(host);
     }
 
     /**
@@ -173,7 +168,7 @@ public class HostManager {
      * @post $none
      */
     public boolean allocatePesForVm(Host host, Vm vm, List<Double> mipsShare) {
-        return hostVmSchedulerManagerService.getManager(host).allocatePesForVm(vm, mipsShare);
+        return vmScheduler.allocatePesForVm(host,vm, mipsShare);
     }
 
     /**
@@ -184,7 +179,7 @@ public class HostManager {
      * @post $none
      */
     public void deallocatePesForVm(Host host, Vm vm) {
-        hostVmSchedulerManagerService.getManager(host).deallocatePesForVm(vm);
+        vmScheduler.deallocatePesForVm(host,vm);
     }
 
     /**
@@ -196,7 +191,7 @@ public class HostManager {
      * @post $none
      */
     public List<Double> getAllocatedMipsForVm(Host host, Vm vm) {
-        return hostVmSchedulerManagerService.getManager(host).getAllocatedMipsForVm(vm);
+        return vmScheduler.getAllocatedMipsForVm(host,vm);
     }
 
     /**
@@ -206,7 +201,7 @@ public class HostManager {
      * @return the allocated mips for vm
      */
     public double getTotalAllocatedMipsForVm(Host host, Vm vm) {
-        return hostVmSchedulerManagerService.getManager(host).getTotalAllocatedMipsForVm(vm);
+        return vmScheduler.getTotalAllocatedMipsForVm(host,vm);
     }
 
     /**
@@ -215,7 +210,7 @@ public class HostManager {
      * @return max mips
      */
     public double getMaxAvailableMips(Host host) {
-        return hostVmSchedulerManagerService.getManager(host).getMaxAvailableMips();
+        return vmScheduler.getMaxAvailableMips(host);
     }
 
     public VmCloudletSchedulerManagerService getVmCloudletSchedulerManager() {
@@ -227,7 +222,7 @@ public class HostManager {
         vmDeallocate(host, vm);
         host.getVmsMigratingIn().remove(vm);
         host.getVmList().remove(vm);
-        hostVmSchedulerManagerService.getManager(host).getVmsMigratingIn().remove(vm.getUid());
+        vmScheduler.getVmsMigratingIn(host).remove(vm.getUid());
         vm.setInMigration(false);
 
 
