@@ -14,6 +14,7 @@ public abstract class DevicesProvider {
     private Map<Integer, Map<Integer, Integer>> routingTable; // now deviceId -> destination deviceId, next deviceId
 
     // manager service
+    // TODO:未初始化HostManager
     HostManager hostManager;
 
     public VmCloudletSchedulerManagerService getVmCloudletSchedulerManagerService() {

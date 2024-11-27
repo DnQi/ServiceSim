@@ -13,10 +13,7 @@ import org.infrastructureProvider.entities.Host;
 import org.infrastructureProvider.entities.Pe;
 import org.infrastructureProvider.entities.Vm;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * VmSchedulerBase is an abstract class that represents the policy used by a VMM to share processing
@@ -51,8 +48,6 @@ public abstract class VmSchedulerBase implements VmScheduler {
 	/**
 	 * Creates a new HostAllocationPolicy.
 	 *
-	 * @pre peList != $null
-	 * @post $none
 	 */
 	public VmSchedulerBase(VmResourceProvisioner<Pe, Double> provisioner) {
 		this.provisioner = provisioner;
@@ -60,9 +55,7 @@ public abstract class VmSchedulerBase implements VmScheduler {
 
 	/**
 	 * Releases PEs allocated to all the VMs.
-	 * 
-	 * @pre $none
-	 * @post $none
+	 *
 	 */
 	@Override
 	public void deallocatePesForAllVms(Host host) {
@@ -89,8 +82,6 @@ public abstract class VmSchedulerBase implements VmScheduler {
 	 * 
 	 * @param vm the vm
 	 * @return an array containing the amount of MIPS of each pe that is available to the VM
-	 * @pre $none
-	 * @post $none
 	 */
 	@Override
 	public List<Double> getAllocatedMipsForVm(Host host, Vm vm) {
@@ -149,7 +140,10 @@ public abstract class VmSchedulerBase implements VmScheduler {
 			Log.printLine("Pe list is empty");
 			return 0;
 		}
-		return host.getPeList().getFirst().getTotalMips();
+		if (host.getPeList().isEmpty())
+			throw new NoSuchElementException();
+		return host.getPeList().get(0).getTotalMips();
+//		return host.getPeList().getFirst().getTotalMips();
 	}
 
 	/**
